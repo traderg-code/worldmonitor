@@ -53,6 +53,8 @@ const STANDALONE_KEYS = {
   cableHealth:           'cable-health-v1',
   cyberThreatsRpc:       'cyber:threats:v2',
   militaryBases:         'military:bases:active',
+  militaryFlights:       'military:flights:v1',
+  militaryFlightsStale:  'military:flights:stale:v1',
   temporalAnomalies:     'temporal:anomalies:v1',
   displacement:          `displacement:summary:v1:${new Date().getFullYear()}`,
 };
@@ -90,6 +92,7 @@ const SEED_META = {
   riskScores:       { key: 'seed-meta:risk:scores',               maxStaleMin: 30 },
   iranEvents:       { key: 'seed-meta:conflict:iran-events',      maxStaleMin: 10080 },
   ucdpEvents:       { key: 'seed-meta:conflict:ucdp-events',      maxStaleMin: 420 },
+  militaryFlights:  { key: 'seed-meta:military:flights',           maxStaleMin: 15 },
   weatherAlerts:    { key: 'seed-meta:weather:alerts',             maxStaleMin: 30 },
   spending:         { key: 'seed-meta:economic:spending',          maxStaleMin: 120 },
   sectors:          { key: 'seed-meta:market:sectors',             maxStaleMin: 30 },
@@ -114,6 +117,8 @@ const CASCADE_GROUPS = {
   theaterPosture:       ['theaterPosture', 'theaterPostureLive', 'theaterPostureBackup'],
   theaterPostureLive:   ['theaterPosture', 'theaterPostureLive', 'theaterPostureBackup'],
   theaterPostureBackup: ['theaterPosture', 'theaterPostureLive', 'theaterPostureBackup'],
+  militaryFlights:      ['militaryFlights', 'militaryFlightsStale'],
+  militaryFlightsStale: ['militaryFlights', 'militaryFlightsStale'],
 };
 
 const NEG_SENTINEL = '__WM_NEG__';
@@ -145,7 +150,7 @@ function dataSize(parsed) {
     for (const k of ['quotes', 'hexes', 'events', 'stablecoins', 'fires', 'threats',
                       'earthquakes', 'outages', 'delays', 'items', 'predictions', 'alerts', 'awards',
                       'papers', 'repos', 'articles', 'signals', 'rates', 'countries',
-                      'chokepoints', 'minerals', 'anomalies', 'flows', 'bases',
+                      'chokepoints', 'minerals', 'anomalies', 'flows', 'bases', 'flights',
                       'theaters', 'fleets', 'warnings', 'closures', 'cables',
                       'airports', 'categories', 'regions', 'entries']) {
       if (Array.isArray(parsed[k])) return parsed[k].length;
