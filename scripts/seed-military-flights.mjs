@@ -344,38 +344,35 @@ async function fetchWingbits() {
   console.log(`  [Wingbits] Response: ${data.length} area results`);
   for (let i = 0; i < data.length; i++) {
     const ar = data[i];
-    const flightList = ar.flights || ar;
-    const count = Array.isArray(flightList) ? flightList.length : 0;
-    console.log(`  [Wingbits]   area[${i}] ${areas[i]?.alias || '?'}: ${count} flights, keys: ${Object.keys(ar || {}).join(',')}`);
-    if (count > 0 && count <= 3) {
-      for (const f of (Array.isArray(flightList) ? flightList : [])) {
-        console.log(`  [Wingbits]     sample: ${JSON.stringify(f).substring(0, 200)}`);
-      }
-    } else if (count > 3) {
-      const f = (Array.isArray(flightList) ? flightList : [])[0];
-      console.log(`  [Wingbits]     sample[0]: ${JSON.stringify(f).substring(0, 200)}`);
+    const flightList = Array.isArray(ar.data) ? ar.data : Array.isArray(ar.flights) ? ar.flights : Array.isArray(ar) ? ar : [];
+    console.log(`  [Wingbits]   area[${i}] ${ar.alias || areas[i]?.alias || '?'}: ${flightList.length} flights, keys: ${Object.keys(ar || {}).join(',')}`);
+    if (flightList.length > 0) {
+      console.log(`  [Wingbits]     sample[0]: ${JSON.stringify(flightList[0]).substring(0, 200)}`);
     }
   }
 
   const states = [];
   const seenIds = new Set();
   for (const areaResult of data) {
-    const flightList = Array.isArray(areaResult.flights || areaResult) ? (areaResult.flights || areaResult) : [];
+    const flightList = Array.isArray(areaResult.data) ? areaResult.data
+      : Array.isArray(areaResult.flights) ? areaResult.flights
+      : Array.isArray(areaResult) ? areaResult : [];
     for (const f of flightList) {
       const icao24 = f.h || f.icao24 || f.id;
       if (!icao24 || seenIds.has(icao24)) continue;
       seenIds.add(icao24);
       const callsign = (f.f || f.callsign || f.flight || '').trim();
+      const raMs = f.ra ? new Date(f.ra).getTime() : (f.ts || Date.now());
       states.push([
         icao24,
         callsign,
-        f.co || f.originCountry || '',
+        f.c || f.co || f.originCountry || '',
         null,
-        f.ts ? f.ts / 1000 : Date.now() / 1000,
+        raMs / 1000,
         f.lo || f.longitude || f.lon || f.lng,
         f.la || f.latitude || f.lat,
         (f.ab || f.altitude || f.alt || 0) * 0.3048,
-        f.gr || f.onGround || false,
+        f.og ?? f.gr ?? f.onGround ?? false,
         (f.gs || f.groundSpeed || f.speed || 0) * 0.514444,
         f.th || f.heading || f.track || 0,
         (f.vr || f.verticalRate || 0) * 0.00508,

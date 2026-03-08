@@ -2596,7 +2596,9 @@ async function fetchTheaterFlightsFromWingbits() {
     const flights = [];
     const seenIds = new Set();
     for (const areaResult of data) {
-      const flightList = Array.isArray(areaResult.flights || areaResult) ? (areaResult.flights || areaResult) : [];
+      const flightList = Array.isArray(areaResult.data) ? areaResult.data
+        : Array.isArray(areaResult.flights) ? areaResult.flights
+        : Array.isArray(areaResult) ? areaResult : [];
       for (const f of flightList) {
         const icao24 = f.h || f.icao24 || f.id;
         if (!icao24 || seenIds.has(icao24)) continue;
