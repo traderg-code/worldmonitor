@@ -1,6 +1,6 @@
 import type { AppContext, AppModule } from '@/app/app-context';
 import type { AirlineIntelPanel } from '@/components/AirlineIntelPanel';
-import type { PanelConfig } from '@/types';
+import type { PanelConfig, MapLayers } from '@/types';
 import type { MapView } from '@/components';
 import type { ClusteredEvent } from '@/types';
 import type { DashboardSnapshot } from '@/services/storage';
@@ -62,6 +62,7 @@ export interface EventHandlerCallbacks {
   syncDataFreshnessWithLayers: () => void;
   ensureCorrectZones: () => void;
   refreshOpenCountryBrief?: () => void;
+  stopLayerActivity?: (layer: keyof MapLayers) => void;
 }
 
 export class EventHandlerManager implements AppModule {
@@ -920,6 +921,8 @@ export class EventHandlerManager implements AppModule {
 
       if (enabled) {
         this.callbacks.loadDataForLayer(layer);
+      } else {
+        this.callbacks.stopLayerActivity?.(layer as keyof MapLayers);
       }
     });
 

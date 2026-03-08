@@ -41,6 +41,9 @@ import { type IranEvent, getIranEventHexColor } from '@/services/conflict';
 import type { DisplacementFlow } from '@/services/displacement';
 import type { ClimateAnomaly } from '@/services/climate';
 import type { GpsJamHex } from '@/services/gps-interference';
+import type { SatellitePosition } from '@/services/satellites';
+
+const SAT_COUNTRY_COLORS: Record<string, string> = { CN: '#ff2020', RU: '#ff8800', US: '#4488ff', EU: '#44cc44', KR: '#aa66ff', OTHER: '#ccccff' };
 
 // ─── Marker discriminated union ─────────────────────────────────────────────
 interface BaseMarker {
@@ -276,12 +279,26 @@ interface AisDisruptionMarker extends BaseMarker {
   severity: AisDisruptionEvent['severity'];
   description: string;
 }
+interface SatelliteMarker extends BaseMarker {
+  _kind: 'satellite';
+  id: string;
+  name: string;
+  country: string;
+  type: string;
+  alt: number;
+}
+interface SatFootprintMarker extends BaseMarker {
+  _kind: 'satFootprint';
+  country: string;
+  noradId: string;
+}
 interface GlobePath {
   id: string;
   name: string;
-  points: [number, number][];
-  pathType: 'cable' | 'oil' | 'gas' | 'products';
+  points: number[][];
+  pathType: 'cable' | 'oil' | 'gas' | 'products' | 'orbit';
   status: string;
+  country?: string;
 }
 interface GlobePolygon {
   coords: number[][][];
@@ -302,7 +319,7 @@ type GlobeMarker =
   | ConflictZoneMarker | MilBaseMarker | NuclearSiteMarker | IrradiatorSiteMarker | SpaceportSiteMarker
   | EarthquakeMarker | EconomicMarker | DatacenterMarker | WaterwayMarker | MineralMarker
   | FlightDelayMarker | CableAdvisoryMarker | RepairShipMarker | AisDisruptionMarker
-  | NewsLocationMarker | FlashMarker;
+  | NewsLocationMarker | FlashMarker | SatelliteMarker | SatFootprintMarker;
 
 interface GlobeControlsLike {
   autoRotate: boolean;
@@ -372,6 +389,9 @@ export class GlobeMap {
   private cableAdvisoryMarkers: CableAdvisoryMarker[] = [];
   private repairShipMarkers: RepairShipMarker[] = [];
   private aisMarkers: AisDisruptionMarker[] = [];
+  private satelliteMarkers: SatelliteMarker[] = [];
+  private satelliteTrailPaths: GlobePath[] = [];
+  private satelliteFootprintMarkers: SatFootprintMarker[] = [];
   private tradeRouteSegments: TradeRouteSegment[] = [];
   private globePaths: GlobePath[] = [];
   private cableFaultIds = new Set<string>();
@@ -532,6 +552,8 @@ export class GlobeMap {
       .htmlLng((d: object) => (d as GlobeMarker)._lng)
       .htmlAltitude((d: object) => {
         const m = d as GlobeMarker;
+        if (m._kind === 'satFootprint') return 0;
+        if (m._kind === 'satellite') return (m as SatelliteMarker).alt / 6371;
         if (m._kind === 'flight' || m._kind === 'vessel') return 0.012;
         if (m._kind === 'hotspot') return 0.005;
         return 0.003;
@@ -562,9 +584,16 @@ export class GlobeMap {
     // Path accessors — set once
     (globe as any)
       .pathPoints((d: GlobePath) => d.points)
-      .pathPointLat((p: [number, number]) => p[1])
-      .pathPointLng((p: [number, number]) => p[0])
+      .pathPointLat((p: number[]) => p[1])
+      .pathPointLng((p: number[]) => p[0])
+      .pathPointAlt((p: number[], _idx: number, path: object) =>
+        (path as GlobePath).pathType === 'orbit' && p.length > 2 ? (p[2] ?? 0) / 6371 : 0
+      )
       .pathColor((d: GlobePath) => {
+        if (d.pathType === 'orbit') {
+          const colors: Record<string, string> = { CN: 'rgba(255,32,32,0.4)', RU: 'rgba(255,136,0,0.4)', US: 'rgba(68,136,255,0.4)', EU: 'rgba(68,204,68,0.4)' };
+          return colors[d.country || ''] || 'rgba(200,200,255,0.3)';
+        }
         if (d.pathType === 'cable') {
           if (this.cableFaultIds.has(d.id))    return '#ff3030';
           if (this.cableDegradedIds.has(d.id)) return '#ff8800';
@@ -574,10 +603,10 @@ export class GlobeMap {
         if (d.pathType === 'gas')   return 'rgba(80,220,120,0.6)';
         return 'rgba(180,160,255,0.6)';
       })
-      .pathStroke((d: GlobePath) => d.pathType === 'cable' ? 0.3 : 0.6)
-      .pathDashLength((d: GlobePath) => d.pathType === 'cable' ? 1 : 0.6)
-      .pathDashGap((d: GlobePath) => d.pathType === 'cable' ? 0 : 0.25)
-      .pathDashAnimateTime((d: GlobePath) => d.pathType === 'cable' ? 0 : 5000)
+      .pathStroke((d: GlobePath) => d.pathType === 'orbit' ? 0.3 : d.pathType === 'cable' ? 0.3 : 0.6)
+      .pathDashLength((d: GlobePath) => d.pathType === 'orbit' ? 0.4 : d.pathType === 'cable' ? 1 : 0.6)
+      .pathDashGap((d: GlobePath) => d.pathType === 'orbit' ? 0.15 : d.pathType === 'cable' ? 0 : 0.25)
+      .pathDashAnimateTime((d: GlobePath) => d.pathType === 'orbit' ? 0 : d.pathType === 'cable' ? 0 : 5000)
       .pathLabel((d: GlobePath) => d.name);
 
     // Polygon accessors — set once
@@ -862,6 +891,15 @@ export class GlobeMap {
       const sc = d.severity === 'high' ? '#ff2020' : d.severity === 'elevated' ? '#ff8800' : '#44aaff';
       el.innerHTML = `<div style="font-size:11px;color:${sc};text-shadow:0 0 4px ${sc}88;">⛴</div>`;
       el.title = d.name;
+    } else if (d._kind === 'satellite') {
+      const c = SAT_COUNTRY_COLORS[(d as SatelliteMarker).country] || '#ccccff';
+      el.innerHTML = `<div style="width:4px;height:4px;border-radius:50%;background:${c};box-shadow:0 0 6px 2px ${c}88"></div>`;
+      el.title = `${(d as SatelliteMarker).name} (${(d as SatelliteMarker).country}) · ${d.type === 'sar' ? 'SAR' : d.type === 'optical' ? 'Optical' : d.type} · ${Math.round((d as SatelliteMarker).alt)}km`;
+    } else if (d._kind === 'satFootprint') {
+      const colors: Record<string, string> = { CN: '#ff2020', RU: '#ff8800', US: '#4488ff', EU: '#44cc44' };
+      const c = colors[(d as SatFootprintMarker).country] || '#ccccff';
+      el.innerHTML = `<div style="width:12px;height:12px;border-radius:50%;border:1px solid ${c}66;background:${c}15;margin:-6px 0 0 -6px"></div>`;
+      el.style.pointerEvents = 'none';
     } else if (d._kind === 'flash') {
       el.style.pointerEvents = 'none';
       el.innerHTML = `
@@ -1048,6 +1086,12 @@ export class GlobeMap {
       const tc = d.threatLevel === 'critical' ? '#ff2020' : d.threatLevel === 'high' ? '#ff6600' : d.threatLevel === 'elevated' ? '#ffaa00' : '#44aaff';
       html = `<span style="color:${tc};font-weight:bold;">📰 ${esc(d.title.slice(0, 60))}</span>` +
              `<br><span style="opacity:.5;">${esc(d.threatLevel)}</span>`;
+    } else if (d._kind === 'satellite') {
+      const sc = SAT_COUNTRY_COLORS[d.country] || '#ccccff';
+      const typeLabel = d.type === 'sar' ? 'SAR Imaging' : d.type === 'optical' ? 'Optical Imaging' : d.type === 'military' ? 'Military' : 'SIGINT';
+      html = `<span style="color:${sc};font-weight:bold;">🛰 ${esc(d.name)}</span>` +
+             `<br><span style="opacity:.7;">${esc(d.country)} · ${esc(typeLabel)}</span>` +
+             `<br><span style="opacity:.5;">${Math.round(d.alt)}km altitude</span>`;
     }
     el.innerHTML = html;
 
@@ -1233,6 +1277,10 @@ export class GlobeMap {
     if (this.layers.displacement) markers.push(...this.displacementMarkers);
     if (this.layers.climate) markers.push(...this.climateMarkers);
     if (this.layers.gpsJamming) markers.push(...this.gpsJamMarkers);
+    if (this.layers.satellites) {
+      markers.push(...this.satelliteMarkers);
+      markers.push(...this.satelliteFootprintMarkers);
+    }
     if (this.layers.techEvents) markers.push(...this.techMarkers);
     if (this.layers.cables) {
       markers.push(...this.cableAdvisoryMarkers);
@@ -1259,7 +1307,8 @@ export class GlobeMap {
     const paths = (showCables && showPipelines)
       ? this.globePaths
       : this.globePaths.filter(p => p.pathType === 'cable' ? showCables : showPipelines);
-    (this.globe as any).pathsData(paths);
+    const orbitPaths = this.layers.satellites ? this.satelliteTrailPaths : [];
+    (this.globe as any).pathsData([...paths, ...orbitPaths]);
   }
 
   private static readonly CII_GLOBE_COLORS: Record<string, string> = {
@@ -1528,6 +1577,7 @@ export class GlobeMap {
     ['pipelines',     { markers: false, arcs: false, paths: true,  polygons: false }],
     ['conflicts',     { markers: true,  arcs: false, paths: false, polygons: true }],
     ['cables',        { markers: true,  arcs: false, paths: true,  polygons: false }],
+    ['satellites',    { markers: true,  arcs: false, paths: true,  polygons: false }],
   ]);
 
   private flushLayerChannels(layer: keyof MapLayers): void {
@@ -1971,6 +2021,41 @@ export class GlobeMap {
     }));
     this.flushMarkers();
   }
+
+  public setSatellites(positions: SatellitePosition[]): void {
+    this.satelliteMarkers = positions.map(s => ({
+      _kind: 'satellite' as const,
+      _lat: s.lat,
+      _lng: s.lng,
+      id: s.noradId,
+      name: s.name,
+      country: s.country,
+      type: s.type,
+      alt: s.alt,
+    }));
+
+    this.satelliteFootprintMarkers = positions.map(s => ({
+      _kind: 'satFootprint' as const,
+      _lat: s.lat,
+      _lng: s.lng,
+      country: s.country,
+      noradId: s.noradId,
+    }));
+
+    this.satelliteTrailPaths = positions
+      .filter(s => s.trail && s.trail.length > 1)
+      .map(s => ({
+        id: `orbit-${s.noradId}`,
+        name: s.name,
+        points: [[s.lng, s.lat, s.alt], ...s.trail],
+        pathType: 'orbit' as const,
+        status: 'active',
+        country: s.country,
+      }));
+
+    this.flushMarkers();
+    this.flushPaths();
+  }
   public setTechEvents(events: Array<{ id: string; title: string; lat: number; lng: number; country: string; daysUntil: number; [key: string]: any }>): void {
     this.techMarkers = (events ?? []).filter(e => e.lat != null && e.lng != null).map(e => ({
       _kind: 'tech' as const,
@@ -2121,7 +2206,7 @@ export class GlobeMap {
       (this.globe as any).pathDashAnimateTime(0);
     } else {
       (this.globe as any).arcDashAnimateTime(5000);
-      (this.globe as any).pathDashAnimateTime((d: GlobePath) => d.pathType === 'cable' ? 0 : 5000);
+      (this.globe as any).pathDashAnimateTime((d: GlobePath) => d.pathType === 'orbit' ? 0 : d.pathType === 'cable' ? 0 : 5000);
     }
 
     if (profile.disableAtmosphere) {

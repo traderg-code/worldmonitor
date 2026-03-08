@@ -33,6 +33,7 @@ export const LAYER_REGISTRY: Record<keyof MapLayers, LayerDefinition> = {
   nuclear:                  def('nuclear',                  '&#9762;',   'nuclearSites',             'Nuclear Sites'),
   irradiators:              def('irradiators',              '&#9888;',   'gammaIrradiators',         'Gamma Irradiators'),
   spaceports:               def('spaceports',               '&#128640;', 'spaceports',               'Spaceports'),
+  satellites:               def('satellites',               '&#128752;', 'satellites',               'Orbital Surveillance', ['globe']),
   cables:                   def('cables',                   '&#128268;', 'underseaCables',           'Undersea Cables'),
   pipelines:                def('pipelines',                '&#128738;', 'pipelines',                'Pipelines'),
   datacenters:              def('datacenters',              '&#128421;', 'aiDataCenters',            'AI Data Centers'),
@@ -84,8 +85,8 @@ const VARIANT_LAYER_ORDER: Record<MapVariant, Array<keyof MapLayers>> = {
     'ais', 'tradeRoutes', 'flights', 'protests',
     'ucdpEvents', 'displacement', 'climate', 'weather',
     'outages', 'cyberThreats', 'natural', 'fires',
-    'waterways', 'economic', 'minerals',
-    'gpsJamming', 'ciiChoropleth', 'dayNight',
+    'waterways', 'economic', 'minerals', 'gpsJamming',
+    'satellites', 'ciiChoropleth', 'dayNight',
   ],
   tech: [
     'startupHubs', 'techHQs', 'accelerators', 'cloudRegions',

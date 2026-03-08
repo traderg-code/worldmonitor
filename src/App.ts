@@ -308,6 +308,7 @@ export class App {
       syncDataFreshnessWithLayers: () => this.dataLoader.syncDataFreshnessWithLayers(),
       ensureCorrectZones: () => this.panelLayout.ensureCorrectZones(),
       refreshOpenCountryBrief: () => this.countryIntel.refreshOpenBrief(),
+      stopLayerActivity: (layer) => this.dataLoader.stopLayerActivity(layer),
     });
 
     // Wire cross-module callback: DataLoader → SearchManager

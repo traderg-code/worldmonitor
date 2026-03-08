@@ -71,6 +71,8 @@ import { analyzeFlightsForSurge, surgeAlertToSignal, detectForeignMilitaryPresen
 import { fetchCachedTheaterPosture } from '@/services/cached-theater-posture';
 import { ingestProtestsForCII, ingestMilitaryForCII, ingestNewsForCII, ingestOutagesForCII, ingestConflictsForCII, ingestUcdpForCII, ingestHapiForCII, ingestDisplacementForCII, ingestClimateForCII, ingestStrikesForCII, ingestOrefForCII, ingestAviationForCII, ingestAdvisoriesForCII, ingestGpsJammingForCII, ingestAisDisruptionsForCII, ingestSatelliteFiresForCII, ingestCyberThreatsForCII, ingestTemporalAnomaliesForCII, isInLearningMode, resetHotspotActivity, setIntelligenceSignalsLoaded, hasAnyIntelligenceData, calculateCII } from '@/services/country-instability';
 import { fetchGpsInterference } from '@/services/gps-interference';
+import { fetchSatelliteTLEs, initSatRecs, propagatePositions, startPropagationLoop } from '@/services/satellites';
+import type { SatRecEntry } from '@/services/satellites';
 import { dataFreshness, type DataSourceId } from '@/services/data-freshness';
 import { fetchConflictEvents, fetchUcdpClassifications, fetchHapiSummary, fetchUcdpEvents, deduplicateAgainstAcled, fetchIranEvents } from '@/services/conflict';
 import { fetchUnhcrPopulation } from '@/services/displacement';
@@ -185,6 +187,8 @@ export class DataLoaderManager implements AppModule {
   }
 
   private boundMarketWatchlistHandler: (() => void) | null = null;
+  private satellitePropagationCleanup: (() => void) | null = null;
+  private cachedSatRecs: SatRecEntry[] | null = null;
 
   private digestBreaker = { state: 'closed' as 'closed' | 'open' | 'half-open', failures: 0, cooldownUntil: 0 };
   private readonly digestRequestTimeoutMs = 8000;
@@ -208,6 +212,7 @@ export class DataLoaderManager implements AppModule {
   }
 
   destroy(): void {
+    this.stopSatellitePropagation();
     this.applyTimeRangeFilterToNewsPanelsDebounced.cancel();
     stopOrefPolling();
     if (this.boundMarketWatchlistHandler) {
@@ -393,6 +398,7 @@ export class DataLoaderManager implements AppModule {
     if (SITE_VARIANT !== 'happy' && CYBER_LAYER_ENABLED && this.ctx.mapLayers.cyberThreats) tasks.push({ name: 'cyberThreats', task: runGuarded('cyberThreats', () => this.loadCyberThreats()) });
     if (SITE_VARIANT !== 'happy' && !isDesktopRuntime()) tasks.push({ name: 'iranAttacks', task: runGuarded('iranAttacks', () => this.loadIranEvents()) });
     if (SITE_VARIANT !== 'happy' && (this.ctx.mapLayers.techEvents || SITE_VARIANT === 'tech')) tasks.push({ name: 'techEvents', task: runGuarded('techEvents', () => this.loadTechEvents()) });
+    if (SITE_VARIANT !== 'happy' && this.ctx.mapLayers.satellites && this.ctx.map?.isGlobeMode?.()) tasks.push({ name: 'satellites', task: runGuarded('satellites', () => this.loadSatellites()) });
 
     if (SITE_VARIANT !== 'happy') {
       tasks.push({ name: 'techReadiness', task: runGuarded('techReadiness', () => (this.ctx.panels['tech-readiness'] as TechReadinessPanel)?.refresh()) });
@@ -483,6 +489,9 @@ export class DataLoaderManager implements AppModule {
         case 'iranAttacks':
           await this.loadIranEvents();
           break;
+        case 'satellites':
+          await this.loadSatellites();
+          break;
         case 'ucdpEvents':
         case 'displacement':
         case 'climate':
@@ -494,6 +503,27 @@ export class DataLoaderManager implements AppModule {
       this.ctx.inFlight.delete(layer);
       this.ctx.map?.setLayerLoading(layer, false);
     }
+  }
+
+  async loadSatellites(): Promise<void> {
+    this.stopSatellitePropagation();
+    const data = await fetchSatelliteTLEs();
+    if (!data || data.length === 0) return;
+    this.cachedSatRecs = initSatRecs(data);
+    const positions = propagatePositions(this.cachedSatRecs);
+    this.ctx.map?.setSatellites(positions);
+    this.satellitePropagationCleanup = startPropagationLoop(this.cachedSatRecs, (pos) => {
+      this.ctx.map?.setSatellites(pos);
+    }, 3000);
+  }
+
+  private stopSatellitePropagation(): void {
+    this.satellitePropagationCleanup?.();
+    this.satellitePropagationCleanup = null;
+  }
+
+  stopLayerActivity(layer: keyof MapLayers): void {
+    if (layer === 'satellites') this.stopSatellitePropagation();
   }
 
   private findFlashLocation(title: string): { lat: number; lon: number } | null {

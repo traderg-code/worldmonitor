@@ -465,7 +465,9 @@ export class SearchModal {
     for (const category of categoryOrder) {
       const list = byCategory.get(category) || [];
       if (list.length === 0) continue;
-      const label = resolveCategoryLabel(list[0]!);
+      const first = list[0];
+      if (!first) continue;
+      const label = resolveCategoryLabel(first);
       html += `<details class="search-command-category" open>`;
       html += `<summary class="search-command-category-summary">${escapeHtml(label)}</summary>`;
       html += `<div class="search-command-category-list">`;

@@ -35,6 +35,7 @@ const LAYER_KEYS: (keyof MapLayers)[] = [
   'tradeRoutes',
   'iranAttacks',
   'gpsJamming',
+  'satellites',
   'ciiChoropleth',
 ];
 

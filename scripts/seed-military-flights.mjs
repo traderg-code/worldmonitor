@@ -473,7 +473,7 @@ function filterMilitaryFlights(allStates) {
       operator = csMatch.operator;
       aircraftType = csMatch.aircraftType || detectAircraftType(callsign);
       operatorCountry = OPERATOR_COUNTRY[csMatch.operator] || 'Unknown';
-      confidence = hexMatch ? 'high' : 'high';
+      confidence = hexMatch ? 'high' : 'medium';
     } else {
       operator = hexMatch.operator;
       aircraftType = detectAircraftType(callsign);
@@ -605,7 +605,7 @@ async function main() {
     const tp1 = await redisSet(url, token, THEATER_POSTURE_LIVE_KEY, posturePayload, THEATER_POSTURE_LIVE_TTL);
     const tp2 = await redisSet(url, token, THEATER_POSTURE_STALE_KEY, posturePayload, THEATER_POSTURE_STALE_TTL);
     const tp3 = await redisSet(url, token, THEATER_POSTURE_BACKUP_KEY, posturePayload, THEATER_POSTURE_BACKUP_TTL);
-    await writeFreshnessMetadata('theater', 'posture', theaterFlights.length, source);
+    await redisSet(url, token, 'seed-meta:theater-posture', { fetchedAt: Date.now(), recordCount: theaterFlights.length, sourceVersion: source || '' }, 604800);
     const elevated = theaters.filter((t) => t.postureLevel !== 'normal').length;
     console.log(`  Theater posture: ${theaters.length} theaters (${elevated} elevated), redis: ${tp1 && tp2 && tp3 ? 'OK' : 'PARTIAL'}`);
 

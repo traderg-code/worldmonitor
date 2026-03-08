@@ -93,9 +93,9 @@ All five variants run from a single codebase — switch between them with one cl
 </details>
 
 <details>
-<summary><strong>Military & Strategic</strong> — 210+ bases, live flights (ADS-B), naval vessels (AIS), nuclear facilities, spaceports</summary>
+<summary><strong>Military & Strategic</strong> — 210+ bases, live flights (ADS-B), naval vessels (AIS), nuclear facilities, spaceports, orbital surveillance</summary>
 
-[Full details →](./docs/DATA_SOURCES.md#data-layers)
+[Full details →](./docs/DATA_SOURCES.md#data-layers) · [Orbital Surveillance →](./docs/ORBITAL_SURVEILLANCE.md)
 </details>
 
 <details>

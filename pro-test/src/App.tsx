@@ -476,6 +476,13 @@ const ProShowcase = () => (
             </div>
           </div>
           <div className="flex gap-4">
+            <Telescope className="w-6 h-6 text-wm-green shrink-0" aria-hidden="true" />
+            <div>
+              <h4 className="font-bold mb-1">{t('proShowcase.orbitalSurveillance')}</h4>
+              <p className="text-sm text-wm-muted">{t('proShowcase.orbitalSurveillanceDesc')}</p>
+            </div>
+          </div>
+          <div className="flex gap-4">
             <Clock className="w-6 h-6 text-wm-green shrink-0" aria-hidden="true" />
             <div>
               <h3 className="font-bold mb-1">{t('proShowcase.morningBriefs')}</h3>
@@ -749,7 +756,7 @@ const PricingTable = () => {
     { feature: t('pricingTable.delivery'), free: "\u2014", pro: t('pricingTable.fSlackTgWa'), api: t('pricingTable.fWebhook'), ent: t('pricingTable.fSiemMcp') },
     { feature: t('pricingTable.apiRow'), free: "\u2014", pro: "\u2014", api: t('pricingTable.fRestWebhook'), ent: t('pricingTable.fMcpBulk') },
     { feature: t('pricingTable.infraLayers'), free: t('pricingTable.f45'), pro: t('pricingTable.f45'), api: "\u2014", ent: t('pricingTable.fTensOfThousands') },
-    { feature: t('pricingTable.satellite'), free: "\u2014", pro: "\u2014", api: "\u2014", ent: t('pricingTable.fImagerySar') },
+    { feature: t('pricingTable.satellite'), free: t('pricingTable.fLiveTracking'), pro: t('pricingTable.fPassAlerts'), api: "\u2014", ent: t('pricingTable.fImagerySar') },
     { feature: t('pricingTable.connectorsRow'), free: "\u2014", pro: "\u2014", api: "\u2014", ent: t('pricingTable.f100plus') },
     { feature: t('pricingTable.deployment'), free: t('pricingTable.fCloud'), pro: t('pricingTable.fCloud'), api: t('pricingTable.fCloud'), ent: t('pricingTable.fCloudOnPrem') },
     { feature: t('pricingTable.securityRow'), free: t('pricingTable.fStandard'), pro: t('pricingTable.fStandard'), api: t('pricingTable.fKeyAuth'), ent: t('pricingTable.fSsoMfa') },

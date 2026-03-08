@@ -1024,6 +1024,127 @@ async function startUcdpSeedLoop() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Satellite TLE Seed — CelesTrak NORAD elements → Redis
+// ─────────────────────────────────────────────────────────────
+const SAT_SEED_INTERVAL_MS = 7_200_000;
+const SAT_SEED_TTL = 14_400;
+const SAT_GROUPS = ['military', 'resource'];
+
+const SAT_NAME_FILTERS = [
+  /^YAOGAN/i, /^GAOFEN/i, /^JILIN/i,
+  /^COSMOS 2[45]\d{2}/i,
+  /^COSMO-SKYMED/i, /^TERRASAR/i, /^PAZ$/i, /^SAR-LUPE/i,
+  /^WORLDVIEW/i, /^SKYSAT/i, /^PLEIADES/i, /^KOMPSAT/i,
+  /^SAPPHIRE/i, /^PRAETORIAN/i,
+  /^SENTINEL/i,
+];
+
+function satClassify(name) {
+  const n = name.toUpperCase();
+  let type = 'military';
+  if (/COSMO-SKYMED|TERRASAR|PAZ|SAR-LUPE|YAOGAN/i.test(n)) type = 'sar';
+  else if (/WORLDVIEW|SKYSAT|PLEIADES|KOMPSAT|GAOFEN|JILIN/i.test(n)) type = 'optical';
+  else if (/SAPPHIRE|PRAETORIAN/i.test(n)) type = 'military';
+
+  let country = 'OTHER';
+  if (/^YAOGAN|^GAOFEN|^JILIN/i.test(n)) country = 'CN';
+  else if (/^COSMOS/i.test(n)) country = 'RU';
+  else if (/^WORLDVIEW|^SAPPHIRE|^PRAETORIAN/i.test(n)) country = 'US';
+  else if (/^SENTINEL|^COSMO-SKYMED|^TERRASAR|^SAR-LUPE|^PAZ|^PLEIADES/i.test(n)) country = 'EU';
+  else if (/^KOMPSAT/i.test(n)) country = 'KR';
+  else if (/^SKYSAT/i.test(n)) country = 'US';
+
+  return { type, country };
+}
+
+let satSeedInFlight = false;
+
+async function seedSatelliteTLEs() {
+  if (satSeedInFlight) return;
+  satSeedInFlight = true;
+  const t0 = Date.now();
+  try {
+    const byNorad = new Map();
+
+    for (const group of SAT_GROUPS) {
+      let text;
+      try {
+        text = await new Promise((resolve, reject) => {
+          const url = new URL(`https://celestrak.org/NORAD/elements/gp.php?GROUP=${group}&FORMAT=tle`);
+          const req = https.request(url, { method: 'GET', headers: { 'User-Agent': CHROME_UA }, timeout: 15000 }, (resp) => {
+            if (resp.statusCode < 200 || resp.statusCode >= 300) {
+              resp.resume();
+              return reject(new Error(`CelesTrak ${group}: HTTP ${resp.statusCode}`));
+            }
+            let data = '';
+            let size = 0;
+            resp.on('data', (chunk) => {
+              size += chunk.length;
+              if (size > 2 * 1024 * 1024) { req.destroy(); return reject(new Error(`CelesTrak ${group}: payload > 2MB`)); }
+              data += chunk;
+            });
+            resp.on('end', () => resolve(data));
+          });
+          req.on('error', reject);
+          req.on('timeout', () => { req.destroy(); reject(new Error(`CelesTrak ${group}: timeout`)); });
+          req.end();
+        });
+      } catch (e) {
+        console.warn(`[Satellites] Skipping group ${group}:`, e?.message || e);
+        continue;
+      }
+
+      const lines = text.split('\n').map(l => l.trimEnd());
+      for (let i = 0; i < lines.length - 2; i++) {
+        const l1 = lines[i + 1];
+        const l2 = lines[i + 2];
+        if (!l1.startsWith('1 ') || !l2.startsWith('2 ')) continue;
+        if (l1.length !== 69 || l2.length !== 69) continue;
+        const name = lines[i].trim();
+        const noradId = l1.substring(2, 7).trim();
+        if (!byNorad.has(noradId)) {
+          byNorad.set(noradId, { noradId, name, line1: l1, line2: l2 });
+        }
+        i += 2;
+      }
+    }
+
+    const satellites = [];
+    for (const sat of byNorad.values()) {
+      if (!SAT_NAME_FILTERS.some(rx => rx.test(sat.name))) continue;
+      const { type, country } = satClassify(sat.name);
+      satellites.push({ ...sat, type, country });
+    }
+
+    if (satellites.length === 0) {
+      console.warn('[Satellites] No matching TLEs found — skipping write');
+      return;
+    }
+
+    const payload = { satellites, fetchedAt: Date.now() };
+    const ok = await upstashSet('intelligence:satellites:tle:v1', payload, SAT_SEED_TTL);
+    await upstashSet('seed-meta:intelligence:satellites', { fetchedAt: Date.now(), recordCount: satellites.length }, 604800);
+    console.log(`[Satellites] Seeded ${satellites.length} TLEs (redis: ${ok ? 'OK' : 'FAIL'}) in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+  } catch (e) {
+    console.warn('[Satellites] Seed error:', e?.message || e);
+  } finally {
+    satSeedInFlight = false;
+  }
+}
+
+async function startSatelliteSeedLoop() {
+  if (!UPSTASH_ENABLED) {
+    console.log('[Satellites] Disabled (no Upstash Redis)');
+    return;
+  }
+  console.log(`[Satellites] Seed loop starting (interval ${SAT_SEED_INTERVAL_MS / 1000 / 60}min)`);
+  seedSatelliteTLEs().catch(e => console.warn('[Satellites] Initial seed error:', e?.message || e));
+  setInterval(() => {
+    seedSatelliteTLEs().catch(e => console.warn('[Satellites] Seed error:', e?.message || e));
+  }, SAT_SEED_INTERVAL_MS).unref?.();
+}
+
+// ─────────────────────────────────────────────────────────────
 // Market Data Seed — Railway fetches Yahoo/Finnhub → writes to Redis
 // so Vercel handlers serve from cache (avoids Yahoo 429 from Vercel IPs)
 // ─────────────────────────────────────────────────────────────
@@ -6358,6 +6479,7 @@ server.listen(PORT, () => {
   startWeatherSeedLoop();
   startSpendingSeedLoop();
   startWorldBankSeedLoop();
+  startSatelliteSeedLoop();
 });
 
 wss.on('connection', (ws, req) => {

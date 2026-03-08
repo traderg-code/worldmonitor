@@ -553,6 +553,8 @@ export interface MapLayers {
   iranAttacks: boolean;
   // GPS/GNSS interference layer
   gpsJamming: boolean;
+  // Satellite orbital tracking
+  satellites: boolean;
 
   // CII choropleth layer
   ciiChoropleth: boolean;

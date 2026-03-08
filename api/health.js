@@ -57,6 +57,7 @@ const STANDALONE_KEYS = {
   militaryFlightsStale:  'military:flights:stale:v1',
   temporalAnomalies:     'temporal:anomalies:v1',
   displacement:          `displacement:summary:v1:${new Date().getFullYear()}`,
+  satellites:            'intelligence:satellites:tle:v1',
 };
 
 const SEED_META = {
@@ -93,6 +94,7 @@ const SEED_META = {
   iranEvents:       { key: 'seed-meta:conflict:iran-events',      maxStaleMin: 10080 },
   ucdpEvents:       { key: 'seed-meta:conflict:ucdp-events',      maxStaleMin: 420 },
   militaryFlights:  { key: 'seed-meta:military:flights',           maxStaleMin: 15 },
+  satellites:       { key: 'seed-meta:intelligence:satellites',    maxStaleMin: 180 },
   weatherAlerts:    { key: 'seed-meta:weather:alerts',             maxStaleMin: 30 },
   spending:         { key: 'seed-meta:economic:spending',          maxStaleMin: 120 },
   sectors:          { key: 'seed-meta:market:sectors',             maxStaleMin: 30 },
@@ -152,7 +154,7 @@ function dataSize(parsed) {
                       'papers', 'repos', 'articles', 'signals', 'rates', 'countries',
                       'chokepoints', 'minerals', 'anomalies', 'flows', 'bases', 'flights',
                       'theaters', 'fleets', 'warnings', 'closures', 'cables',
-                      'airports', 'categories', 'regions', 'entries']) {
+                      'airports', 'categories', 'regions', 'entries', 'satellites']) {
       if (Array.isArray(parsed[k])) return parsed[k].length;
     }
     return Object.keys(parsed).length;

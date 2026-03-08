@@ -39,6 +39,7 @@ import type { HappinessData } from '@/services/happiness-data';
 import type { SpeciesRecovery } from '@/services/conservation-data';
 import type { RenewableInstallation } from '@/services/renewable-installations';
 import type { GpsJamHex } from '@/services/gps-interference';
+import type { SatellitePosition } from '@/services/satellites';
 import type { IranEvent } from '@/services/conflict';
 
 export type TimeRange = '1h' | '6h' | '24h' | '48h' | '7d' | 'all';
@@ -116,6 +117,7 @@ export class MapContainer {
   private cachedDisplacementFlows: DisplacementFlow[] | null = null;
   private cachedClimateAnomalies: ClimateAnomaly[] | null = null;
   private cachedGpsJamming: GpsJamHex[] | null = null;
+  private cachedSatellites: SatellitePosition[] | null = null;
   private cachedCyberThreats: CyberThreat[] | null = null;
   private cachedIranEvents: IranEvent[] | null = null;
   private cachedNewsLocations: NewsLocationMarker[] | null = null;
@@ -276,6 +278,7 @@ export class MapContainer {
     if (this.cachedDisplacementFlows) this.setDisplacementFlows(this.cachedDisplacementFlows);
     if (this.cachedClimateAnomalies) this.setClimateAnomalies(this.cachedClimateAnomalies);
     if (this.cachedGpsJamming) this.setGpsJamming(this.cachedGpsJamming);
+    if (this.cachedSatellites) this.setSatellites(this.cachedSatellites);
     if (this.cachedCyberThreats) this.setCyberThreats(this.cachedCyberThreats);
     if (this.cachedIranEvents) this.setIranEvents(this.cachedIranEvents);
     if (this.cachedNewsLocations) this.setNewsLocations(this.cachedNewsLocations);
@@ -529,6 +532,11 @@ export class MapContainer {
     if (this.useDeckGL) {
       this.deckGLMap?.setGpsJamming(hexes);
     }
+  }
+
+  public setSatellites(positions: SatellitePosition[]): void {
+    this.cachedSatellites = positions;
+    if (this.useGlobe) { this.globeMap?.setSatellites(positions); return; }
   }
 
   public setCyberThreats(threats: CyberThreat[]): void {
@@ -905,6 +913,7 @@ export class MapContainer {
     this.cachedDisplacementFlows = null;
     this.cachedClimateAnomalies = null;
     this.cachedGpsJamming = null;
+    this.cachedSatellites = null;
     this.cachedCyberThreats = null;
     this.cachedIranEvents = null;
     this.cachedNewsLocations = null;
