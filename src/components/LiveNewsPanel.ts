@@ -747,7 +747,7 @@ export class LiveNewsPanel extends Panel {
   }
 
   private getChannelDisplayName(channel: LiveChannel): string {
-    return channel.hlsUrl && !channel.handle ? `${channel.name} 🔗` : channel.name;
+    return channel.name;
   }
 
   /** Creates a single channel tab button with click and drag handlers. */

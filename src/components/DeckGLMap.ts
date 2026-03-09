@@ -532,8 +532,11 @@ export class DeckGLMap {
       if (attr) attr.innerHTML = '© <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
     }
 
+    const basemapEl = document.getElementById('deckgl-basemap');
+    if (!basemapEl) return;
+
     this.maplibreMap = new maplibregl.Map({
-      container: 'deckgl-basemap',
+      container: basemapEl,
       style: primaryStyle,
       center: [preset.longitude, preset.latitude],
       zoom: preset.zoom,
@@ -558,8 +561,10 @@ export class DeckGLMap {
       const attr = this.container.querySelector('.map-attribution');
       if (attr) attr.innerHTML = '© <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
       this.maplibreMap?.remove();
+      const fallbackEl = document.getElementById('deckgl-basemap');
+      if (!fallbackEl) return;
       this.maplibreMap = new maplibregl.Map({
-        container: 'deckgl-basemap',
+        container: fallbackEl,
         style: fallback,
         center: [preset.longitude, preset.latitude],
         zoom: preset.zoom,
