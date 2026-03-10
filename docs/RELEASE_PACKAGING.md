@@ -1,14 +1,16 @@
 # Desktop Release Packaging Guide (Local, Reproducible)
 
-This guide provides reproducible local packaging steps for both desktop variants:
+This guide provides reproducible local packaging steps for desktop variants:
 
 - **full** → `World Monitor`
 - **tech** → `Tech Monitor`
+- **finance** → `Finance Monitor`
 
 Variant identity is controlled by Tauri config:
 
 - full: `src-tauri/tauri.conf.json`
 - tech: `src-tauri/tauri.tech.conf.json`
+- finance: `src-tauri/tauri.finance.conf.json`
 
 ## Prerequisites
 
@@ -59,6 +61,7 @@ npm run desktop:package -- --help
 ```bash
 npm run desktop:package:macos:full
 npm run desktop:package:macos:tech
+npm run desktop:package:macos:finance
 # or generic runner
 npm run desktop:package -- --os macos --variant full
 ```
@@ -68,8 +71,9 @@ npm run desktop:package -- --os macos --variant full
 ```bash
 npm run desktop:package:windows:full
 npm run desktop:package:windows:tech
+npm run desktop:package:windows:finance
 # or generic runner
-npm run desktop:package -- --os windows --variant tech
+npm run desktop:package -- --os windows --variant finance
 ```
 
 Bundler targets are pinned in both Tauri configs and enforced by packaging scripts:
@@ -184,11 +188,13 @@ npm run desktop:package:windows:full:sign
 
 - Full variant: `World Monitor` / `world-monitor`
 - Tech variant: `Tech Monitor` / `tech-monitor`
+- Finance variant: `Finance Monitor` / `finance-monitor`
 
 Distinct names are configured in Tauri:
 
 - `src-tauri/tauri.conf.json` → `World Monitor` / `world-monitor`
 - `src-tauri/tauri.tech.conf.json` → `Tech Monitor` / `tech-monitor`
+- `src-tauri/tauri.finance.conf.json` → `Finance Monitor` / `finance-monitor`
 
 If you want variant-specific icons, set `bundle.icon` separately in each config and point each variant to dedicated icon assets.
 

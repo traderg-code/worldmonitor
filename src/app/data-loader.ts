@@ -58,6 +58,7 @@ import {
   fetchShippingRates,
   fetchChokepointStatus,
   fetchCriticalMinerals,
+  fetchAssetIntelligence,
 } from '@/services';
 import { getMarketWatchlistEntries } from '@/services/market-watchlist';
 import { fetchStockAnalysesForTargets, getStockAnalysisTargets } from '@/services/stock-analysis';
@@ -454,6 +455,10 @@ export class DataLoaderManager implements AppModule {
     }
 
     this.updateSearchIndex();
+
+    if (SITE_VARIANT === 'finance') {
+      await this.loadAssetIntelligence();
+    }
 
     if (SITE_VARIANT === 'finance' && getSecretState('WORLDMONITOR_API_KEY').present) {
       await this.loadDailyMarketBrief();
@@ -994,6 +999,9 @@ export class DataLoaderManager implements AppModule {
     }
 
     this.ctx.allNews = collectedNews;
+    if (SITE_VARIANT === 'finance') {
+      this.callPanel('asset-intelligence', 'updateNewsContext', this.ctx.newsByCategory);
+    }
     this.ctx.initialLoadComplete = true;
     mountCommunityWidget();
 
@@ -1308,6 +1316,35 @@ export class DataLoaderManager implements AppModule {
       this.callPanel('daily-market-brief', 'showError', 'Failed to build daily market brief. Retrying later.');
     } finally {
       this.ctx.inFlight.delete('dailyMarketBrief');
+    }
+  }
+
+  async loadAssetIntelligence(): Promise<void> {
+    if (SITE_VARIANT !== 'finance') return;
+    if (this.ctx.isDestroyed || this.ctx.inFlight.has('assetIntelligence')) return;
+
+    this.ctx.inFlight.add('assetIntelligence');
+    try {
+      const [gold, sp500] = await Promise.allSettled([
+        fetchAssetIntelligence('xauusd'),
+        fetchAssetIntelligence('sp500'),
+      ]);
+
+      const responses: Partial<Record<'xauusd' | 'sp500', import('@/generated/client/worldmonitor/market/v1/service_client').GetAssetIntelligenceResponse>> = {};
+      if (gold.status === 'fulfilled' && gold.value) responses.xauusd = gold.value;
+      if (sp500.status === 'fulfilled' && sp500.value) responses.sp500 = sp500.value;
+
+      if (Object.keys(responses).length === 0) {
+        this.callPanel('asset-intelligence', 'showError', 'Asset intelligence is temporarily unavailable.');
+        return;
+      }
+
+      this.callPanel('asset-intelligence', 'renderAssetData', responses, this.ctx.newsByCategory, 'live');
+    } catch (error) {
+      console.warn('[AssetIntelligence] failed:', error);
+      this.callPanel('asset-intelligence', 'showError', 'Asset intelligence is temporarily unavailable.');
+    } finally {
+      this.ctx.inFlight.delete('assetIntelligence');
     }
   }
 

@@ -11,6 +11,7 @@ import {
   type ListCryptoQuotesResponse,
   type MarketQuote as ProtoMarketQuote,
   type CryptoQuote as ProtoCryptoQuote,
+  type GetAssetIntelligenceResponse,
 } from '@/generated/client/worldmonitor/market/v1/service_client';
 import type { MarketData, CryptoData } from '@/types';
 import { createCircuitBreaker } from '@/utils';
@@ -120,6 +121,7 @@ export async function fetchStockQuote(
 // ========================================================================
 
 let lastSuccessfulCrypto: CryptoData[] = [];
+const lastSuccessfulAssetIntelligence = new Map<string, GetAssetIntelligenceResponse>();
 
 export async function fetchCrypto(): Promise<CryptoData[]> {
   const hydrated = getHydratedData('cryptoQuotes') as ListCryptoQuotesResponse | undefined;
@@ -142,4 +144,20 @@ export async function fetchCrypto(): Promise<CryptoData[]> {
   }
 
   return lastSuccessfulCrypto;
+}
+
+export type AssetIntelligenceAssetId = 'xauusd' | 'sp500';
+
+export async function fetchAssetIntelligence(
+  assetId: AssetIntelligenceAssetId,
+): Promise<GetAssetIntelligenceResponse | null> {
+  try {
+    const response = await client.getAssetIntelligence({ assetId });
+    if (response.available) {
+      lastSuccessfulAssetIntelligence.set(assetId, response);
+    }
+    return response.available ? response : (lastSuccessfulAssetIntelligence.get(assetId) ?? response);
+  } catch {
+    return lastSuccessfulAssetIntelligence.get(assetId) ?? null;
+  }
 }

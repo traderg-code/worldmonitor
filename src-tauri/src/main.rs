@@ -643,7 +643,6 @@ fn open_settings_window(app: &AppHandle) -> Result<(), String> {
 
     let _settings_window = WebviewWindowBuilder::new(app, "settings", WebviewUrl::App("settings.html".into()))
         .title("World Monitor Settings")
-        .title_bar_style(tauri::TitleBarStyle::Overlay)
         .inner_size(980.0, 600.0)
         .min_inner_size(820.0, 480.0)
         .resizable(true)
@@ -681,7 +680,6 @@ fn open_live_channels_window(app: &AppHandle, base_url: Option<String>) -> Resul
 
     let _live_channels_window = WebviewWindowBuilder::new(app, "live-channels", url)
     .title("Channel management - World Monitor")
-    .title_bar_style(tauri::TitleBarStyle::Overlay)
     .inner_size(680.0, 760.0)
     .min_inner_size(520.0, 600.0)
     .resizable(true)

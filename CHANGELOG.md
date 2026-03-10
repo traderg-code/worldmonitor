@@ -2,6 +2,13 @@
 
 All notable changes to World Monitor are documented here.
 
+## [Unreleased]
+
+### Added
+
+- Finance variant `Asset Intelligence` workspace for Gold / XAUUSD and S&P 500 with a new market RPC, macro driver scoring, scenario mapping, watch levels, catalyst tracking, and asset-specific finance feed integration
+- Finance desktop packaging scripts for Windows and macOS via the Tauri finance config
+
 ## [2.6.0] - 2026-03-09
 
 ### Highlights

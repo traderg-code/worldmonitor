@@ -6,6 +6,7 @@ import {
   MapContainer,
   NewsPanel,
   MarketPanel,
+  AssetIntelligencePanel,
   StockAnalysisPanel,
   StockBacktestPanel,
   HeatmapPanel,
@@ -482,6 +483,7 @@ export class PanelLayoutManager implements AppModule {
 
     this.createPanel('heatmap', () => new HeatmapPanel());
     this.createPanel('markets', () => new MarketPanel());
+    this.createPanel('asset-intelligence', () => new AssetIntelligencePanel());
     const stockAnalysisPanel = this.createPanel('stock-analysis', () => new StockAnalysisPanel());
     if (stockAnalysisPanel && !getSecretState('WORLDMONITOR_API_KEY').present) {
       stockAnalysisPanel.showLocked([

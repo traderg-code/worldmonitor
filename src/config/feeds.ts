@@ -1029,6 +1029,20 @@ const FINANCE_FEEDS: Record<string, Feed[]> = {
     { name: 'Risk & Volatility', url: rss('https://news.google.com/rss/search?q=(VIX+OR+"market+volatility"+OR+"risk+off"+OR+"market+correction")+when:3d&hl=en-US&gl=US&ceid=US:en') },
     { name: 'Bank Research', url: rss('https://news.google.com/rss/search?q=("Goldman+Sachs"+OR+"JPMorgan"+OR+"Morgan+Stanley")+forecast+OR+outlook+when:3d&hl=en-US&gl=US&ceid=US:en') },
   ],
+  xauusd: [
+    { name: 'Kitco Gold', url: rss('https://www.kitco.com/rss/KitcoGold.xml') },
+    { name: 'Gold Price News', url: rss('https://news.google.com/rss/search?q=(gold+price+OR+XAUUSD+OR+bullion+OR+LBMA)+when:1d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'World Gold Council', url: rss('https://news.google.com/rss/search?q=("World+Gold+Council"+OR+"central+bank+gold"+OR+"gold+reserves")+when:7d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'GoldSeek', url: rss('https://news.goldseek.com/GoldSeek/rss.xml') },
+    { name: 'Gold ETF Watch', url: rss('https://news.google.com/rss/search?q=(GLD+OR+"gold+ETF"+OR+"gold+fund+flows")+when:2d&hl=en-US&gl=US&ceid=US:en') },
+  ],
+  sp500: [
+    { name: 'S&P 500 News', url: rss('https://news.google.com/rss/search?q=("S%26P+500"+OR+SP500+OR+SPX+OR+SPY)+when:1d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'Reuters Equities', url: rss('https://news.google.com/rss/search?q=site:reuters.com+("S%26P+500"+OR+equities+OR+Wall+Street)+when:1d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'Wall Street Outlook', url: rss('https://news.google.com/rss/search?q=("Wall+Street"+OR+"US+stocks"+OR+equity+outlook)+when:2d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'Fed And Yields', url: rss('https://news.google.com/rss/search?q=(Fed+OR+"Treasury+yields"+OR+"10-year+yield")+("S%26P+500"+OR+stocks)+when:2d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'Earnings Breadth', url: rss('https://news.google.com/rss/search?q=(earnings+guidance+OR+earnings+breadth+OR+"megacap+earnings")+("S%26P+500"+OR+stocks)+when:2d&hl=en-US&gl=US&ceid=US:en') },
+  ],
   gccNews: [
     { name: 'Arabian Business', url: rss('https://news.google.com/rss/search?q=site:arabianbusiness.com+(Saudi+Arabia+OR+UAE+OR+GCC)+when:7d&hl=en-US&gl=US&ceid=US:en') },
     { name: 'The National', url: rss('https://news.google.com/rss/search?q=site:thenationalnews.com+(Abu+Dhabi+OR+UAE+OR+Saudi)+when:7d&hl=en-US&gl=US&ceid=US:en') },

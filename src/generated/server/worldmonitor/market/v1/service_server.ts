@@ -166,6 +166,61 @@ export interface GulfQuote {
   sparkline: number[];
 }
 
+export interface GetAssetIntelligenceRequest {
+  assetId: string;
+}
+
+export interface GetAssetIntelligenceResponse {
+  available: boolean;
+  assetId: string;
+  title: string;
+  symbol: string;
+  priceDisplay: string;
+  price: number;
+  dayChangePercent: number;
+  currency: string;
+  updatedAt: string;
+  regime: string;
+  conviction: string;
+  supportiveDrivers: number;
+  headwindDrivers: number;
+  executiveSummary: string;
+  forecastSummary: string;
+  drivers: AssetIntelligenceDriver[];
+  levels: AssetIntelligenceLevel[];
+  scenarios: AssetIntelligenceScenario[];
+  catalysts: AssetIntelligenceCatalyst[];
+  sourceNote: string;
+}
+
+export interface AssetIntelligenceDriver {
+  id: string;
+  label: string;
+  score: number;
+  stance: string;
+  valueDisplay: string;
+  detail: string;
+  horizon: string;
+}
+
+export interface AssetIntelligenceLevel {
+  label: string;
+  value: number;
+  valueDisplay: string;
+}
+
+export interface AssetIntelligenceScenario {
+  name: string;
+  probability: number;
+  narrative: string;
+}
+
+export interface AssetIntelligenceCatalyst {
+  title: string;
+  description: string;
+  importance: string;
+}
+
 export interface AnalyzeStockRequest {
   symbol: string;
   name: string;
@@ -346,6 +401,7 @@ export interface MarketServiceHandler {
   listEtfFlows(ctx: ServerContext, req: ListEtfFlowsRequest): Promise<ListEtfFlowsResponse>;
   getCountryStockIndex(ctx: ServerContext, req: GetCountryStockIndexRequest): Promise<GetCountryStockIndexResponse>;
   listGulfQuotes(ctx: ServerContext, req: ListGulfQuotesRequest): Promise<ListGulfQuotesResponse>;
+  getAssetIntelligence(ctx: ServerContext, req: GetAssetIntelligenceRequest): Promise<GetAssetIntelligenceResponse>;
   analyzeStock(ctx: ServerContext, req: AnalyzeStockRequest): Promise<AnalyzeStockResponse>;
   getStockAnalysisHistory(ctx: ServerContext, req: GetStockAnalysisHistoryRequest): Promise<GetStockAnalysisHistoryResponse>;
   backtestStock(ctx: ServerContext, req: BacktestStockRequest): Promise<BacktestStockResponse>;
@@ -692,6 +748,53 @@ export function createMarketServiceRoutes(
 
           const result = await handler.listGulfQuotes(ctx, body);
           return new Response(JSON.stringify(result as ListGulfQuotesResponse), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        } catch (err: unknown) {
+          if (err instanceof ValidationError) {
+            return new Response(JSON.stringify({ violations: err.violations }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+          if (options?.onError) {
+            return options.onError(err, req);
+          }
+          const message = err instanceof Error ? err.message : String(err);
+          return new Response(JSON.stringify({ message }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+      },
+    },
+    {
+      method: "GET",
+      path: "/api/market/v1/get-asset-intelligence",
+      handler: async (req: Request): Promise<Response> => {
+        try {
+          const pathParams: Record<string, string> = {};
+          const url = new URL(req.url, "http://localhost");
+          const params = url.searchParams;
+          const body: GetAssetIntelligenceRequest = {
+            assetId: params.get("asset_id") ?? "",
+          };
+          if (options?.validateRequest) {
+            const bodyViolations = options.validateRequest("getAssetIntelligence", body);
+            if (bodyViolations) {
+              throw new ValidationError(bodyViolations);
+            }
+          }
+
+          const ctx: ServerContext = {
+            request: req,
+            pathParams,
+            headers: Object.fromEntries(req.headers.entries()),
+          };
+
+          const result = await handler.getAssetIntelligence(ctx, body);
+          return new Response(JSON.stringify(result as GetAssetIntelligenceResponse), {
             status: 200,
             headers: { "Content-Type": "application/json" },
           });

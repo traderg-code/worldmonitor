@@ -166,6 +166,61 @@ export interface GulfQuote {
   sparkline: number[];
 }
 
+export interface GetAssetIntelligenceRequest {
+  assetId: string;
+}
+
+export interface GetAssetIntelligenceResponse {
+  available: boolean;
+  assetId: string;
+  title: string;
+  symbol: string;
+  priceDisplay: string;
+  price: number;
+  dayChangePercent: number;
+  currency: string;
+  updatedAt: string;
+  regime: string;
+  conviction: string;
+  supportiveDrivers: number;
+  headwindDrivers: number;
+  executiveSummary: string;
+  forecastSummary: string;
+  drivers: AssetIntelligenceDriver[];
+  levels: AssetIntelligenceLevel[];
+  scenarios: AssetIntelligenceScenario[];
+  catalysts: AssetIntelligenceCatalyst[];
+  sourceNote: string;
+}
+
+export interface AssetIntelligenceDriver {
+  id: string;
+  label: string;
+  score: number;
+  stance: string;
+  valueDisplay: string;
+  detail: string;
+  horizon: string;
+}
+
+export interface AssetIntelligenceLevel {
+  label: string;
+  value: number;
+  valueDisplay: string;
+}
+
+export interface AssetIntelligenceScenario {
+  name: string;
+  probability: number;
+  narrative: string;
+}
+
+export interface AssetIntelligenceCatalyst {
+  title: string;
+  description: string;
+  importance: string;
+}
+
 export interface AnalyzeStockRequest {
   symbol: string;
   name: string;
@@ -535,6 +590,31 @@ export class MarketServiceClient {
     }
 
     return await resp.json() as ListGulfQuotesResponse;
+  }
+
+  async getAssetIntelligence(req: GetAssetIntelligenceRequest, options?: MarketServiceCallOptions): Promise<GetAssetIntelligenceResponse> {
+    let path = "/api/market/v1/get-asset-intelligence";
+    const params = new URLSearchParams();
+    if (req.assetId != null && req.assetId !== "") params.set("asset_id", String(req.assetId));
+    const url = this.baseURL + path + (params.toString() ? "?" + params.toString() : "");
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...this.defaultHeaders,
+      ...options?.headers,
+    };
+
+    const resp = await this.fetchFn(url, {
+      method: "GET",
+      headers,
+      signal: options?.signal,
+    });
+
+    if (!resp.ok) {
+      return this.handleError(resp);
+    }
+
+    return await resp.json() as GetAssetIntelligenceResponse;
   }
 
   async analyzeStock(req: AnalyzeStockRequest, options?: MarketServiceCallOptions): Promise<AnalyzeStockResponse> {

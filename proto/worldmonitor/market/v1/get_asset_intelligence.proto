@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package worldmonitor.market.v1;
+
+import "sebuf/http/annotations.proto";
+
+// GetAssetIntelligenceRequest selects which macro asset workspace to build.
+message GetAssetIntelligenceRequest {
+  // Supported values: "xauusd", "sp500".
+  string asset_id = 1 [(sebuf.http.query) = { name: "asset_id" }];
+}
+
+// AssetIntelligenceDriver represents a scored fundamental driver for the asset.
+message AssetIntelligenceDriver {
+  string id = 1;
+  string label = 2;
+  double score = 3;
+  string stance = 4;
+  string value_display = 5;
+  string detail = 6;
+  string horizon = 7;
+}
+
+// AssetIntelligenceLevel represents a key technical or macro reference level.
+message AssetIntelligenceLevel {
+  string label = 1;
+  double value = 2;
+  string value_display = 3;
+}
+
+// AssetIntelligenceScenario represents a base, bull, or bear case.
+message AssetIntelligenceScenario {
+  string name = 1;
+  int32 probability = 2;
+  string narrative = 3;
+}
+
+// AssetIntelligenceCatalyst describes a near-term event to watch.
+message AssetIntelligenceCatalyst {
+  string title = 1;
+  string description = 2;
+  string importance = 3;
+}
+
+// GetAssetIntelligenceResponse contains a structured fundamental workspace.
+message GetAssetIntelligenceResponse {
+  bool available = 1;
+  string asset_id = 2;
+  string title = 3;
+  string symbol = 4;
+  string price_display = 5;
+  double price = 6;
+  double day_change_percent = 7;
+  string currency = 8;
+  string updated_at = 9;
+  string regime = 10;
+  string conviction = 11;
+  int32 supportive_drivers = 12;
+  int32 headwind_drivers = 13;
+  string executive_summary = 14;
+  string forecast_summary = 15;
+  repeated AssetIntelligenceDriver drivers = 16;
+  repeated AssetIntelligenceLevel levels = 17;
+  repeated AssetIntelligenceScenario scenarios = 18;
+  repeated AssetIntelligenceCatalyst catalysts = 19;
+  string source_note = 20;
+}

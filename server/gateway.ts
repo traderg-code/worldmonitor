@@ -55,6 +55,7 @@ const RPC_CACHE_TIER: Record<string, CacheTier> = {
   '/api/market/v1/list-stablecoin-markets': 'medium',
   '/api/market/v1/get-sector-summary': 'medium',
   '/api/market/v1/list-gulf-quotes': 'medium',
+  '/api/market/v1/get-asset-intelligence': 'medium',
   '/api/market/v1/analyze-stock': 'slow',
   '/api/market/v1/get-stock-analysis-history': 'medium',
   '/api/market/v1/backtest-stock': 'slow',

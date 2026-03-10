@@ -16,6 +16,7 @@ The core layer is the part required for the premium feature to work. Extra layer
 The current premium finance scope includes:
 
 - premium stock analysis
+- asset intelligence for Gold / XAUUSD and S&P 500
 - shared analysis history
 - stored backtest summaries
 - scheduled daily market brief generation
@@ -49,6 +50,7 @@ It does **not** attempt full parity with the source repo's:
 Primary handlers:
 
 - [analyze-stock.ts](../server/worldmonitor/market/v1/analyze-stock.ts)
+- [get-asset-intelligence.ts](../server/worldmonitor/market/v1/get-asset-intelligence.ts)
 - [get-stock-analysis-history.ts](../server/worldmonitor/market/v1/get-stock-analysis-history.ts)
 - [backtest-stock.ts](../server/worldmonitor/market/v1/backtest-stock.ts)
 - [list-stored-stock-backtests.ts](../server/worldmonitor/market/v1/list-stored-stock-backtests.ts)
@@ -57,6 +59,7 @@ Primary handlers:
 Primary contracts:
 
 - [analyze_stock.proto](../proto/worldmonitor/market/v1/analyze_stock.proto)
+- [get_asset_intelligence.proto](../proto/worldmonitor/market/v1/get_asset_intelligence.proto)
 - [get_stock_analysis_history.proto](../proto/worldmonitor/market/v1/get_stock_analysis_history.proto)
 - [backtest_stock.proto](../proto/worldmonitor/market/v1/backtest_stock.proto)
 - [list_stored_stock_backtests.proto](../proto/worldmonitor/market/v1/list_stored_stock_backtests.proto)
@@ -66,6 +69,7 @@ Primary contracts:
 
 Panels:
 
+- [AssetIntelligencePanel.ts](../src/components/AssetIntelligencePanel.ts)
 - [StockAnalysisPanel.ts](../src/components/StockAnalysisPanel.ts)
 - [StockBacktestPanel.ts](../src/components/StockBacktestPanel.ts)
 - [DailyMarketBriefPanel.ts](../src/components/DailyMarketBriefPanel.ts)
@@ -73,6 +77,7 @@ Panels:
 Services and loading:
 
 - [stock-analysis.ts](../src/services/stock-analysis.ts)
+- [market/index.ts](../src/services/market/index.ts)
 - [stock-analysis-history.ts](../src/services/stock-analysis-history.ts)
 - [stock-backtest.ts](../src/services/stock-backtest.ts)
 - [daily-market-brief.ts](../src/services/daily-market-brief.ts)
@@ -167,6 +172,32 @@ It:
 - avoids unnecessary regeneration before the next local morning schedule
 
 This is a World Monitor adaptation, not a port of the source repo's full scheduler/automation system.
+
+---
+
+## Asset Intelligence
+
+The asset-intelligence workspace is a finance-native macro panel focused on two tracked assets:
+
+- Gold / XAUUSD
+- S&P 500
+
+It is not a generic chart widget. It builds a structured desk view from:
+
+- Yahoo Finance price history and trend context
+- FRED macro series when `FRED_API_KEY` is configured
+- the existing finance-news mesh already loaded by World Monitor
+
+Each response includes:
+
+- executive summary and forecast summary
+- scored driver board
+- scenario map
+- watch levels
+- catalyst map
+- conviction and regime tags
+
+This surface is intended to fit inside the existing finance variant rather than introducing a standalone fundamental-analysis app.
 
 ---
 

@@ -651,6 +651,12 @@ export class App {
       () => !!this.state.panels['macro-signals']
     );
     this.refreshScheduler.scheduleRefresh(
+      'asset-intelligence',
+      () => this.dataLoader.loadAssetIntelligence(),
+      10 * 60_000,
+      () => !!this.state.panels['asset-intelligence'] && SITE_VARIANT === 'finance'
+    );
+    this.refreshScheduler.scheduleRefresh(
       'strategic-posture',
       () => (this.state.panels['strategic-posture'] as StrategicPosturePanel).refresh(),
       15 * 60_000,
