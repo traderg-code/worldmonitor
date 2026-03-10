@@ -643,13 +643,14 @@ export class GlobeMap {
 
     // Path accessors — set once
     (globe as any)
-      .pathPoints((d: GlobePath) => d.points)
+      .pathPoints((d: GlobePath) => d?.points ?? [])
       .pathPointLat((p: number[]) => p[1])
       .pathPointLng((p: number[]) => p[0])
       .pathPointAlt((p: number[], _idx: number, path: object) =>
-        (path as GlobePath).pathType === 'orbit' && p.length > 2 ? (p[2] ?? 0) / 6371 : 0
+        (path as GlobePath)?.pathType === 'orbit' && p.length > 2 ? (p[2] ?? 0) / 6371 : 0
       )
       .pathColor((d: GlobePath) => {
+        if (!d) return 'rgba(180,160,255,0.6)';
         if (d.pathType === 'orbit') {
           const colors: Record<string, string> = { CN: 'rgba(255,32,32,0.4)', RU: 'rgba(255,136,0,0.4)', US: 'rgba(68,136,255,0.4)', EU: 'rgba(68,204,68,0.4)' };
           return colors[d.country || ''] || 'rgba(200,200,255,0.3)';
@@ -673,12 +674,14 @@ export class GlobeMap {
         return 'rgba(180,160,255,0.6)';
       })
       .pathStroke((d: GlobePath) => {
+        if (!d) return 0.6;
         if (d.pathType === 'orbit') return 0.3;
         if (d.pathType === 'cable') return 0.3;
         if (d.pathType === 'stormTrack' || d.pathType === 'stormHistory') return 1.2;
         return 0.6;
       })
       .pathDashLength((d: GlobePath) => {
+        if (!d) return 0.6;
         if (d.pathType === 'orbit') return 0.4;
         if (d.pathType === 'cable') return 1;
         if (d.pathType === 'stormTrack') return 0.8;
@@ -686,6 +689,7 @@ export class GlobeMap {
         return 0.6;
       })
       .pathDashGap((d: GlobePath) => {
+        if (!d) return 0.25;
         if (d.pathType === 'orbit') return 0.15;
         if (d.pathType === 'cable') return 0;
         if (d.pathType === 'stormTrack') return 0.4;
@@ -693,13 +697,14 @@ export class GlobeMap {
         return 0.25;
       })
       .pathDashAnimateTime((d: GlobePath) => {
+        if (!d) return 5000;
         if (d.pathType === 'orbit') return 0;
         if (d.pathType === 'cable') return 0;
         if (d.pathType === 'stormTrack') return 3000;
         if (d.pathType === 'stormHistory') return 0;
         return 5000;
       })
-      .pathLabel((d: GlobePath) => d.name);
+      .pathLabel((d: GlobePath) => d?.name ?? '');
 
     // Polygon accessors — set once
     (globe as any)
@@ -2592,7 +2597,12 @@ export class GlobeMap {
       (this.globe as any).pathDashAnimateTime(0);
     } else {
       (this.globe as any).arcDashAnimateTime(5000);
-      (this.globe as any).pathDashAnimateTime((d: GlobePath) => d.pathType === 'orbit' ? 0 : d.pathType === 'cable' ? 0 : 5000);
+      (this.globe as any).pathDashAnimateTime((d: GlobePath) => {
+        if (!d) return 5000;
+        if (d.pathType === 'orbit') return 0;
+        if (d.pathType === 'cable') return 0;
+        return 5000;
+      });
     }
 
     if (profile.disableAtmosphere) {
