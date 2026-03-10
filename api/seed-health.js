@@ -38,16 +38,6 @@ const SEED_DOMAINS = {
   'supply_chain:shipping':    { key: 'seed-meta:supply_chain:shipping',    intervalMin: 120 },
   'supply_chain:chokepoints': { key: 'seed-meta:supply_chain:chokepoints', intervalMin: 30 },
   'cable-health':             { key: 'seed-meta:cable-health',             intervalMin: 30 },
-  // RPC-populated (long intervals, on-demand)
-  'economic:macro-signals':   { key: 'seed-meta:economic:macro-signals',   intervalMin: 30 },
-  'economic:bis:policy':      { key: 'seed-meta:economic:bis:policy',      intervalMin: 1440 },
-  'economic:bis:eer':         { key: 'seed-meta:economic:bis:eer',         intervalMin: 1440 },
-  'economic:bis:credit':      { key: 'seed-meta:economic:bis:credit',      intervalMin: 1440 },
-  'supply_chain:minerals':    { key: 'seed-meta:supply_chain:minerals',    intervalMin: 5040 },
-  'giving:summary':           { key: 'seed-meta:giving:summary',           intervalMin: 5040 },
-  'economic:worldbank-techreadiness:v1': { key: 'seed-meta:economic:worldbank-techreadiness:v1', intervalMin: 5040 },
-  'economic:worldbank-progress:v1':      { key: 'seed-meta:economic:worldbank-progress:v1',      intervalMin: 5040 },
-  'economic:worldbank-renewable:v1':     { key: 'seed-meta:economic:worldbank-renewable:v1',     intervalMin: 5040 },
   'prediction:markets':       { key: 'seed-meta:prediction:markets',       intervalMin: 8 },
 };
 
@@ -131,7 +121,7 @@ export default async function handler(req) {
     };
   }
 
-  const overall = staleCount > 0 ? 'degraded' : missingCount > 0 ? 'warning' : 'healthy';
+  const overall = missingCount > 0 ? 'degraded' : staleCount > 0 ? 'warning' : 'healthy';
   const httpStatus = overall === 'degraded' ? 503 : 200;
 
   return new Response(JSON.stringify({ overall, seeds, checkedAt: now }), {
