@@ -655,24 +655,20 @@ export class LiveNewsPanel extends Panel {
 
   private createLiveButton(): void {
     this.liveBtn = document.createElement('button');
-    this.liveBtn.className = 'live-indicator-btn';
+    this.liveBtn.className = 'live-mute-btn';
     this.liveBtn.title = 'Toggle playback';
     this.updateLiveIndicator();
     this.liveBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.togglePlayback();
     });
-
-    const header = this.element.querySelector('.panel-header');
-    header?.appendChild(this.liveBtn);
   }
 
   private updateLiveIndicator(): void {
     if (!this.liveBtn) return;
     this.liveBtn.innerHTML = this.isPlaying
-      ? '<span class="live-dot"></span>Live'
-      : '<span class="live-dot paused"></span>Paused';
-    this.liveBtn.classList.toggle('paused', !this.isPlaying);
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
   }
 
   private togglePlayback(): void {
@@ -698,6 +694,7 @@ export class LiveNewsPanel extends Panel {
     });
 
     const header = this.element.querySelector('.panel-header');
+    if (this.liveBtn) header?.appendChild(this.liveBtn);
     header?.appendChild(this.muteBtn);
 
     this.createFullscreenButton();
